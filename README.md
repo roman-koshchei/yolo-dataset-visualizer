@@ -30,3 +30,8 @@ Run:
 ```bash
 npm run tauri dev
 ```
+
+## Development
+
+As of 12.05.2025 project uses Tauri framework and TypeScript.
+It's a tool and I wanted to use things I know, aka TypeScript and web.
