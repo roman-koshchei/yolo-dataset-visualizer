@@ -2,12 +2,7 @@ import { readDir, readTextFileLines, remove } from "@tauri-apps/plugin-fs";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { path } from "@tauri-apps/api";
 import { element, one } from "./dom";
-
-function removeExtension(filename: string) {
-  const lastDotIndex = filename.lastIndexOf(".");
-  if (lastDotIndex === -1) return filename;
-  return filename.slice(0, lastDotIndex);
-}
+import { BoundingBox, convertYoloToBoundingBox, readDataset } from "./helpers";
 
 const main = one("main");
 const dialog = element(
@@ -23,43 +18,14 @@ async function renderImages(
   datasetImagesDir: string,
   datasetLabelsDir: string
 ) {
-  const files = await readDir(datasetImagesDir)
-    .then((images) =>
-      images
-        .filter((x) => x.isFile)
-        .map(async (x) => {
-          const basename = removeExtension(x.name);
-          const txtName = `${basename}.txt`;
-          return {
-            basename,
-            imageName: x.name,
-            imagePath: await path.join(datasetImagesDir, x.name),
-            txtName: txtName,
-            txtPath: await path.join(datasetLabelsDir, txtName),
-          };
-        })
-    )
-    .then((x) => Promise.all(x));
-
-  // imageFiles.sort(
-  //   (a, b) => Number(removeExtension(a.name)) - Number(removeExtension(b.name))
-  // );
+  const files = await readDataset(datasetImagesDir, datasetLabelsDir);
 
   for (let i = 0; i < files.length; i += 1) {
     const file = files[i];
     const labelFileLines = await readTextFileLines(file.txtPath);
-    const boxes = [];
+    const boxes: BoundingBox[] = [];
     for await (const labelLine of labelFileLines) {
-      const [_, xCenter, yCenter, width, height] = labelLine
-        .split(" ")
-        .map(parseFloat);
-
-      boxes.push({
-        width: width,
-        height: height,
-        left: xCenter - width / 2,
-        top: yCenter - height / 2,
-      });
+      boxes.push(convertYoloToBoundingBox(labelLine));
     }
 
     const wrapper = element("div", "border border-stone-700 p-2");
@@ -79,6 +45,12 @@ async function renderImages(
       wrapper.remove();
     });
     actions.append(removeBtn);
+
+    const editBtn = element("button", "cursor-pointer px-1 bg-blue-500", {
+      textContent: "Edit",
+    });
+    editBtn.addEventListener("click", async () => {});
+    actions.append(editBtn);
 
     const imgWrapper = element("div", "relative cursor-pointer");
     const img = element("img", "w-full h-auto", {
@@ -156,15 +128,5 @@ function renderForm() {
 
   main.append(form);
 }
-
-// const datasetImagesDir = "C:\\Work\\Project\\Dataset\\images\\train";
-// const datasetLabelsDir = "C:\\Work\\Project\\Dataset\\labels\\train";
-
-// const datasetImagesDir =
-//   "C:\\Users\\roman\\Downloads\\african-wildlife\\train\\images";
-// const datasetLabelsDir =
-//   "C:\\Users\\roman\\Downloads\\african-wildlife\\train\\labels";
-
-// renderImages(datasetImagesDir, datasetLabelsDir);
 
 renderForm();
