@@ -7,6 +7,7 @@
     "core:default",
     "opener:default",
     "fs:allow-open",
+    "fs:allow-write-text-file",
     "fs:allow-write",
     "fs:allow-read-dir",
     "fs:allow-read-file",
@@ -19,6 +20,7 @@
           "path": "**"
         }
       ]
-    }
+    },
+    "store:default"
   ]
 }

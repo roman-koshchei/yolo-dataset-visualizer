@@ -1,4 +1,4 @@
-import { readDir } from "@tauri-apps/plugin-fs";
+import { readDir, writeTextFile } from "@tauri-apps/plugin-fs";
 import { path } from "@tauri-apps/api";
 
 export interface BoundingBox {
@@ -67,4 +67,17 @@ export async function readDataset(
   }
 
   return files;
+}
+
+export async function saveImageLabels(txtPath: string, boxes: BoundingBox[]) {
+  let contents = "";
+  for (const box of boxes) {
+    const xCenter = box.left + box.width / 2;
+    const yCenter = box.top + box.height / 2;
+    contents += `0 ${xCenter} ${yCenter} ${box.width} ${box.height}\n`;
+  }
+  console.log(contents);
+  await writeTextFile(txtPath, contents, {
+    append: false,
+  }).catch((err) => console.log(err));
 }
